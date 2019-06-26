@@ -859,6 +859,10 @@ if nix:
     if not darwin:
         env.Append( LINKFLAGS=["-rdynamic"] )
 
+    # hide boost symbols
+    env.Append( LINKFLAGS="-Wl,--exclude-libs=libboost_system.a:libboost_thread.a:libboost_filesystem.a:libboost_program_options.a" )
+    env.Append( SHLINKFLAGS="-Wl,--exclude-libs=libboost_system.a:libboost_thread.a:libboost_filesystem.a:libboost_program_options.a" )
+
     env.Append( LIBS=[] )
 
     #make scons colorgcc friendly
