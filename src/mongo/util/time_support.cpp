@@ -881,6 +881,33 @@ namespace {
         return newPerfCounter;
     }
 
+    /*!
+     * Implementation of following function copied from Boost 1.60.0
+     * The function converts file_time into number of microseconds elapsed since 1970-Jan-01
+     *
+     * \note Only dates after 1970-Jan-01 are supported. Dates before will be wrapped.
+     *
+     * \note The function is templated on the FILETIME type, so that
+     *       it can be used with both native FILETIME and the ad-hoc
+     *       boost::date_time::winapi::file_time type.
+     */
+    template< typename FileTimeT >
+    inline uint64_t file_time_to_microseconds(FileTimeT const& ft)
+    {
+        /* shift is difference between 1970-Jan-01 & 1601-Jan-01
+        * in 100-nanosecond intervals */
+        const uint64_t shift = 116444736000000000ULL; // (27111902 << 32) + 3577643008
+
+        union {
+            FileTimeT as_file_time;
+            uint64_t as_integer; // 100-nanos since 1601-Jan-01
+        } caster;
+        caster.as_file_time = ft;
+
+        caster.as_integer -= shift; // filetime is now 100-nanos since 1970-Jan-01
+        return (caster.as_integer / 10); // truncate to microseconds
+    }
+
     unsigned long long curTimeMicros64() {
 
         // Get a current value for QueryPerformanceCounter; if it is not time to resync we will
@@ -912,7 +939,7 @@ namespace {
 
         // Convert the computed FILETIME into microseconds since the Unix epoch (1/1/1970).
         //
-        return boost::date_time::winapi::file_time_to_microseconds(computedTime);
+        return file_time_to_microseconds(computedTime);
     }
 
     unsigned curTimeMicros() {
